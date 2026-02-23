@@ -1,0 +1,68 @@
+I would like to use python.  And I also want to implement using
+some combination of AI agent and tools, and would like to run the workflow
+as a langgraph workflow.  I would also like to use an open source model like llama with ollama.
+Can you keep the building of the model object required by langgaph in a separate file?  It will be easier
+to configure that way.
+
+First lets build an MVP.  Specifically for images that are spread throughout my 
+local filesystem.  So, given a directory, the agent should recursively scan below that directory
+to see where all the images are.  To keep things simple, lets identify only png and jpeg files.
+
+Then, given another directory, place all the images in that directory.  We can organize those images later.
+
+The two directories noted above should be configurable in some configuration file.  Also, if an image is located inside
+the hierarchy of a directory that is a git project, those images should be ignored (perhaps keep a list of those that have been ignored)
+
+Is this something you can do?
+
+---
+
+thank you!  i will consider the potential issues with llama3.2
+
+can you wrap this in a fast api endpoint, and create a client for that endpoint.
+
+also, create a directory called "script" and in this directory, build the following scripts:
+1 - install_uv.sh - this installs all the dependencies using uv (environment created will be in .venv of the project root)
+2 - install_pip.sh - this installs all the dependencies using pip (environment create will be in the directory .pipvenv of the project root)
+3 - run_uv.sh - runs the fastapi app using uv
+4 - run_pip.sh - runs the fastapi app using uv
+5 - install_uv.bat - this installs all the dependencies using uv (environment created will be in .venv of the project root)
+6 - install_pip.bat - this installs all the dependencies using pip (environment create will be in the directory .pipvenv of the project root)
+7 - run_uv.bat - runs the fastapi app using uv
+8 - run_pip.bat - runs the fastapi app using uv
+
+i would like to be able to run this either on bash in wsl or powershell on windows (hence the .sh and .bat files).  Can you create a bash directory
+in script and a bat directory in script to house the corresponding scripts?
+
+---
+
+thank you!
+
+Also can you create a src directory and put all the source files in it, and do the same with the config files by putting them in a config directory?
+
+---
+Thank you!
+
+It seems that the images didnt get moved and have stayed in their original directory.  Can you check to see what the problem might be?
+THe directory C:/Users/jfhar/Pictures/Organized was created and does exist.
+
+---
+
+Thank you!
+
+That worked great!
+
+Now a problem may come up in that files are named the same.  If this is the case, then concat a version number to the name starting with 1 (and if 1 exists, then 2, and so on)
+
+---
+
+add an additional config parameter that determines whether
+or not to keep a copy of the image in the original directory.
+
+Also keep a moved images log in addition to the ignored images log.
+The moved images log could take information about the moved image to have it 
+look like a table with the following columns:
+Name | original location | new location | date of move | copy retained
+
+
+

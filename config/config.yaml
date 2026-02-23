@@ -1,0 +1,15 @@
+# Directories
+source_directory: "C:/Users/jfhar/pickedpics" # Root directory to scan recursively
+destination_directory: "C:/Users/jfhar/Pictures/Organized" # Where images will be moved
+
+# Logging
+ignored_log: "C:/Users/jfhar/github/desktop_organizer/ignored_images/ignored_images.log" # File to record images skipped (inside git repos)
+moved_log: "C:/Users/jfhar/github/desktop_organizer/moved_images/moved_images.log" # File to record all moved images (markdown table)
+
+# Options
+retain_copy: true # If true, keep a copy of the image in the original directory after moving
+
+# Model (see model_config.py)
+model:
+  name: "llama3.2"
+  temperature: 0.0
