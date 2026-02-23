@@ -23,7 +23,7 @@ from typing import List, TypedDict
 
 from langgraph.graph import END, StateGraph
 
-from tools import _move_images_impl, _scan_images_impl
+from image_organization.tools import _move_images_impl, _scan_images_impl
 
 
 # ---------------------------------------------------------------------------

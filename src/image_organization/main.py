@@ -10,10 +10,14 @@ from pathlib import Path
 
 import yaml
 
-from workflow import run_workflow
+# Ensure src/ is on sys.path so package imports work when run as a script.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from image_organization.workflow import run_workflow
 
 # Resolve config path relative to this file so it works regardless of working directory.
-_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "config.yaml"
+# src/image_organization/main.py -> parent -> image_organization/ -> parent -> src/ -> parent -> project root
+_CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "config.yaml"
 
 
 def load_config() -> dict:

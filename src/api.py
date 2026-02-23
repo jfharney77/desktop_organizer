@@ -12,7 +12,9 @@ import yaml
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from workflow import run_workflow
+from image_organization.vision_workflow import run_vision_workflow
+from image_organization.workflow import run_workflow
+from model_config import VISION_MODEL
 
 app = FastAPI(
     title="Desktop Image Organizer",
@@ -31,6 +33,21 @@ def _load_config() -> dict:
         return yaml.safe_load(fh) or {}
 
 
+class DescribeRequest(BaseModel):
+    """Describe a single image using the llama3.2-vision model."""
+    image_name: Optional[str] = None        # defaults to describe_image_name from config
+    search_directory: Optional[str] = None  # defaults to destination_directory from config
+
+
+class DescribeResponse(BaseModel):
+    image_name: str
+    search_directory: str
+    found: bool
+    image_path: Optional[str] = None
+    description: Optional[str] = None
+    error: Optional[str] = None
+
+
 class OrganizeRequest(BaseModel):
     """All fields are optional; missing values fall back to config.yaml."""
     source_directory: Optional[str] = None
@@ -47,6 +64,46 @@ class OrganizeResponse(BaseModel):
     moved_log: str
     retain_copy: bool
     agent_summary: str
+
+
+@app.post("/describe", response_model=DescribeResponse)
+def describe(request: DescribeRequest):
+    """
+    Describe a single image using llama3.2-vision.
+
+    *image_name* is the filename to look for (e.g. ``photo.jpg``).
+    *search_directory* defaults to ``destination_directory`` from config.yaml.
+
+    Returns a plain-language description of the image, or a clear error if the
+    file cannot be found — the vision model is never called for missing files.
+    """
+    config = _load_config()
+
+    image_name  = request.image_name      or config.get("describe_image_name", "").strip()
+    search_dir  = request.search_directory or config.get("destination_directory", "")
+
+    if not image_name:
+        raise HTTPException(
+            status_code=400,
+            detail="image_name is required (set describe_image_name in config.yaml or pass it in the request body).",
+        )
+    if not search_dir:
+        raise HTTPException(
+            status_code=400,
+            detail="search_directory is required (set destination_directory in config.yaml or pass it in the request body).",
+        )
+
+    result = run_vision_workflow(
+        image_name=image_name,
+        search_directory=search_dir,
+        model_name=VISION_MODEL,
+    )
+
+    return DescribeResponse(
+        image_name=image_name,
+        search_directory=search_dir,
+        **result,
+    )
 
 
 @app.get("/health")

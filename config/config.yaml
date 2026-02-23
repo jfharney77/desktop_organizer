@@ -8,6 +8,7 @@ moved_log: "C:/Users/jfhar/github/desktop_organizer/moved_images/moved_images.lo
 
 # Options
 retain_copy: true # If true, keep a copy of the image in the original directory after moving
+describe_image_name: "reception-25_1_1.jpg" # Default image filename for the /describe endpoint (e.g. "photo.jpg")
 
 # Model (see model_config.py)
 model:

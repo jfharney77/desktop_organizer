@@ -66,3 +66,38 @@ Name | original location | new location | date of move | copy retained
 
 
 
+---
+
+assuming i can use the llama 3.2 vision model, can you 
+create an agent / tool combination that can describe
+an image given an image name (by default check the destination location of the moved images) if the name doesnt exist, make sure 
+the agent doesnt hallucinate.
+
+put the code in the src directory and make it a different fast api endpoint
+
+---
+
+ can you write the scripts (similar to the image moving) that can install and run this new service 
+ in both bash and batch?
+
+
+ ---
+
+ can you write a client for this new fast api service just created?  
+ make it a different file than the previous client.py file
+
+ ---
+
+ great! can you move the vision model declaration to the model_config.py file that the previous model was isolated to?
+
+ ---
+
+ can you separate the function to declare the text-to-text model
+ and the vision model (i.e. two separate functions)?
+
+ ---
+
+ can you make a main method in ther model_config.py file
+ that calls each of those models with a sample query?
+
+ 
