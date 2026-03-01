@@ -1,7 +1,7 @@
 """
 tools.py
 
-LangChain tools exposed to the LangGraph agent, plus the underlying
+LangChain tools for the PowerPoint organizer, plus the underlying
 implementation functions used directly by the StateGraph nodes.
 
 Separating _impl from @tool means the workflow nodes can call the logic
@@ -17,7 +17,7 @@ from typing import Annotated
 from langchain_core.tools import tool
 
 
-IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
+PPTX_EXTENSIONS = {".pptx", ".ppt", ".pptm"}
 
 
 def _is_in_git_repo(path: Path) -> bool:
@@ -37,10 +37,10 @@ def _is_in_git_repo(path: Path) -> bool:
 # Pure-Python implementations (called directly by StateGraph nodes)
 # ---------------------------------------------------------------------------
 
-def _scan_images_impl(directory: str, ignored_log: str) -> dict:
+def _scan_pptx_impl(directory: str, ignored_log: str) -> dict:
     """
-    Recursively scan *directory* for PNG and JPEG image files.
-    Images inside git repositories are excluded and written to *ignored_log*.
+    Recursively scan *directory* for PowerPoint files (.pptx, .ppt, .pptm).
+    Files inside git repositories are excluded and written to *ignored_log*.
     """
     source = Path(directory)
 
@@ -53,7 +53,7 @@ def _scan_images_impl(directory: str, ignored_log: str) -> dict:
     ignored: list[str] = []
 
     for file in source.rglob("*"):
-        if file.is_file() and file.suffix.lower() in IMAGE_EXTENSIONS:
+        if file.is_file() and file.suffix.lower() in PPTX_EXTENSIONS:
             if _is_in_git_repo(file):
                 ignored.append(str(file))
             else:
@@ -69,21 +69,21 @@ def _scan_images_impl(directory: str, ignored_log: str) -> dict:
         "found": found,
         "ignored": ignored,
         "summary": (
-            f"Found {len(found)} image(s) to move, "
-            f"ignored {len(ignored)} image(s) inside git repos "
+            f"Found {len(found)} PowerPoint file(s) to move, "
+            f"ignored {len(ignored)} file(s) inside git repos "
             f"(logged to {ignored_log})"
         ),
     }
 
 
-def _move_images_impl(
-    image_paths: list[str],
+def _move_pptx_impl(
+    pptx_paths: list[str],
     destination_directory: str,
     moved_log: str = "",
     retain_copy: bool = False,
 ) -> dict:
     """
-    Move (or copy, if *retain_copy* is True) each file in *image_paths* to
+    Move (or copy, if *retain_copy* is True) each file in *pptx_paths* to
     *destination_directory*.  Numeric suffixes (_1, _2, …) are added on name
     conflicts.  A markdown-table log of every moved file is written to
     *moved_log* (appended if the file already exists).
@@ -95,7 +95,7 @@ def _move_images_impl(
     errors: list[str] = []
     log_rows: list[tuple[str, str, str, str, str]] = []  # (name, orig, new, date, copy)
 
-    for src_str in image_paths:
+    for src_str in pptx_paths:
         src = Path(src_str)
 
         if not src.exists():
@@ -156,28 +156,28 @@ def make_configured_tools(ignored_log: str, moved_log: str, retain_copy: bool):
     """
 
     @tool
-    def scan_images_agent(
-        directory: Annotated[str, "Absolute path to the root directory to scan for PNG/JPEG images"],
+    def scan_powerpoints_agent(
+        directory: Annotated[str, "Absolute path to the root directory to scan for PowerPoint files"],
     ) -> dict:
         """
-        Recursively scan *directory* for PNG and JPEG image files.
+        Recursively scan *directory* for PowerPoint files (.pptx, .ppt, .pptm).
         Files inside git repositories are excluded.
         Returns a dict with 'found', 'ignored', and 'summary'.
         """
-        return _scan_images_impl(directory, ignored_log)
+        return _scan_pptx_impl(directory, ignored_log)
 
     @tool
-    def move_images_agent(
-        image_paths: Annotated[list[str], "List of absolute image file paths to move"],
+    def move_powerpoints_agent(
+        pptx_paths: Annotated[list[str], "List of absolute PowerPoint file paths to move"],
         destination_directory: Annotated[str, "Absolute path to the destination directory"],
     ) -> dict:
         """
-        Move each file in *image_paths* to *destination_directory*.
+        Move each file in *pptx_paths* to *destination_directory*.
         Returns a dict with 'moved', 'errors', and 'summary'.
         """
-        return _move_images_impl(image_paths, destination_directory, moved_log, retain_copy)
+        return _move_pptx_impl(pptx_paths, destination_directory, moved_log, retain_copy)
 
-    return scan_images_agent, move_images_agent
+    return scan_powerpoints_agent, move_powerpoints_agent
 
 
 # ---------------------------------------------------------------------------
@@ -185,25 +185,25 @@ def make_configured_tools(ignored_log: str, moved_log: str, retain_copy: bool):
 # ---------------------------------------------------------------------------
 
 @tool
-def scan_images(
+def scan_powerpoints(
     directory: Annotated[str, "Absolute path to the root directory to scan"],
-    ignored_log: Annotated[str, "File path where ignored image paths will be written"],
+    ignored_log: Annotated[str, "File path where ignored file paths will be written"],
 ) -> dict:
     """
-    Recursively scan *directory* for PNG and JPEG image files.
-    Any image found inside a git repository is excluded and recorded in *ignored_log*.
+    Recursively scan *directory* for PowerPoint files (.pptx, .ppt, .pptm).
+    Any file found inside a git repository is excluded and recorded in *ignored_log*.
     Returns a dict with 'found', 'ignored', and 'summary'.
     """
-    return _scan_images_impl(directory, ignored_log)
+    return _scan_pptx_impl(directory, ignored_log)
 
 
 @tool
-def move_images(
-    image_paths: Annotated[list[str], "List of absolute image file paths to move"],
+def move_powerpoints(
+    pptx_paths: Annotated[list[str], "List of absolute PowerPoint file paths to move"],
     destination_directory: Annotated[str, "Absolute path to the destination directory"],
 ) -> dict:
     """
-    Move each file in *image_paths* to *destination_directory*.
+    Move each file in *pptx_paths* to *destination_directory*.
     Returns a dict with 'moved', 'errors', and 'summary'.
     """
-    return _move_images_impl(image_paths, destination_directory)
+    return _move_pptx_impl(pptx_paths, destination_directory)

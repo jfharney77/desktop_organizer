@@ -1,7 +1,7 @@
 """
 workflow.py
 
-LangGraph StateGraph for the image organiser.
+LangGraph StateGraph for the PowerPoint organizer.
 
 Why StateGraph instead of a ReAct agent?
 -----------------------------------------
@@ -9,14 +9,11 @@ A ReAct agent asks the LLM to decide what tool to call next AND to pass
 the results of one tool call as arguments to the next.  For this workflow
 that means the LLM must copy a potentially large list of file paths from
 the scan result into the move call.  Local models (llama3.2, etc.) reliably
-drop or truncate that list, so images are never actually moved.
+drop or truncate that list, so files are never actually moved.
 
 A StateGraph fixes this by carrying data through typed graph *state*:
 the scan node writes found paths into state, and the move node reads them
 directly — the LLM is never involved in the data handoff.
-
-model_config.py is kept for future nodes that genuinely need LLM reasoning
-(e.g. de-duplicating, tagging, or summarising results).
 """
 
 from typing import List, TypedDict
@@ -24,21 +21,21 @@ from typing import List, TypedDict
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import END, StateGraph
 
-from image_organization.tools import _move_images_impl, _scan_images_impl, make_configured_tools
+from powerpoint_organization.tools import _move_pptx_impl, _scan_pptx_impl, make_configured_tools
 
 
 # ---------------------------------------------------------------------------
 # Graph state
 # ---------------------------------------------------------------------------
 
-class OrganizerState(TypedDict):
+class PowerpointOrganizerState(TypedDict):
     source_dir: str
     destination_dir: str
     ignored_log: str
     moved_log: str
     retain_copy: bool
-    found_images: List[str]
-    ignored_images: List[str]
+    found_files: List[str]
+    ignored_files: List[str]
     summary: str
 
 
@@ -46,21 +43,21 @@ class OrganizerState(TypedDict):
 # Nodes
 # ---------------------------------------------------------------------------
 
-def scan_node(state: OrganizerState) -> dict:
-    """Discover PNG/JPEG files; write ignored list to log file."""
-    result = _scan_images_impl(state["source_dir"], state["ignored_log"])
+def scan_node(state: PowerpointOrganizerState) -> dict:
+    """Discover PowerPoint files; write ignored list to log file."""
+    result = _scan_pptx_impl(state["source_dir"], state["ignored_log"])
     return {
-        "found_images": result.get("found", []),
-        "ignored_images": result.get("ignored", []),
+        "found_files": result.get("found", []),
+        "ignored_files": result.get("ignored", []),
     }
 
 
-def move_node(state: OrganizerState) -> dict:
-    """Move all found images to the destination directory."""
-    found = state.get("found_images", [])
+def move_node(state: PowerpointOrganizerState) -> dict:
+    """Move all found PowerPoint files to the destination directory."""
+    found = state.get("found_files", [])
     if not found:
-        return {"summary": "Scan complete — no images found to move."}
-    result = _move_images_impl(
+        return {"summary": "Scan complete — no PowerPoint files found to move."}
+    result = _move_pptx_impl(
         found,
         state["destination_dir"],
         moved_log=state.get("moved_log", ""),
@@ -74,7 +71,7 @@ def move_node(state: OrganizerState) -> dict:
 # ---------------------------------------------------------------------------
 
 def _build_graph():
-    graph = StateGraph(OrganizerState)
+    graph = StateGraph(PowerpointOrganizerState)
     graph.add_node("scan", scan_node)
     graph.add_node("move", move_node)
     graph.set_entry_point("scan")
@@ -126,7 +123,7 @@ def run_workflow(
     model_name: str = "llama3.2",
     temperature: float = 0.0,
 ) -> str:
-    """Run the organiser graph and return a human-readable summary."""
+    """Run the PowerPoint organizer graph and return a human-readable summary."""
     if use_agent:
         app = _build_agent_graph(
             source_dir, destination_dir, ignored_log, moved_log,
@@ -135,17 +132,17 @@ def run_workflow(
         result = app.invoke({
             "messages": [
                 SystemMessage(content=(
-                    "You are an image file organizer. "
-                    "You have two tools: scan_images_agent and move_images_agent. "
+                    "You are a PowerPoint file organizer. "
+                    "You have two tools: scan_powerpoints_agent and move_powerpoints_agent. "
                     "You MUST call these tools — never guess or fabricate directory contents. "
-                    "Step 1: call scan_images_agent to discover files. "
-                    "Step 2: call move_images_agent with the exact paths returned by the scan. "
+                    "Step 1: call scan_powerpoints_agent to discover files. "
+                    "Step 2: call move_powerpoints_agent with the exact paths returned by the scan. "
                     "Do not produce a final answer until both tool calls are complete."
                 )),
                 HumanMessage(content=(
-                    f"Organize images step by step:\n"
-                    f"1. Call scan_images_agent with directory='{source_dir}'\n"
-                    f"2. Call move_images_agent with the found paths and destination_directory='{destination_dir}'\n"
+                    f"Organize PowerPoint files step by step:\n"
+                    f"1. Call scan_powerpoints_agent with directory='{source_dir}'\n"
+                    f"2. Call move_powerpoints_agent with the found paths and destination_directory='{destination_dir}'\n"
                     f"3. Report how many files were moved and any errors."
                 )),
             ]
@@ -160,16 +157,16 @@ def run_workflow(
         "ignored_log": ignored_log,
         "moved_log": moved_log,
         "retain_copy": retain_copy,
-        "found_images": [],
-        "ignored_images": [],
+        "found_files": [],
+        "ignored_files": [],
         "summary": "",
     })
 
-    found_count   = len(final_state.get("found_images", []))
-    ignored_count = len(final_state.get("ignored_images", []))
+    found_count   = len(final_state.get("found_files", []))
+    ignored_count = len(final_state.get("ignored_files", []))
     move_summary  = final_state.get("summary", "")
 
     return (
         f"{move_summary}\n"
-        f"Images found: {found_count}  |  ignored (in git repos): {ignored_count}"
+        f"PowerPoint files found: {found_count}  |  ignored (in git repos): {ignored_count}"
     )

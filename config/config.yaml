@@ -7,8 +7,16 @@ ignored_log: "C:/Users/jfhar/github/desktop_organizer/ignored_images/ignored_ima
 moved_log: "C:/Users/jfhar/github/desktop_organizer/moved_images/moved_images.log" # File to record all moved images (markdown table)
 
 # Options
-retain_copy: true # If true, keep a copy of the image in the original directory after moving
+retain_copy: true
+use_agent: false # If true, use a ReAct agent (LLM dispatches tool calls); if false, use direct StateGraph nodes # If true, keep a copy of the image in the original directory after moving
 describe_image_name: "reception-25_1_1.jpg" # Default image filename for the /describe endpoint (e.g. "photo.jpg")
+
+# PowerPoint Organization
+powerpoint_source_directory: "C:/Users/jfhar/Downloads/ppts" # Root directory to scan for PowerPoint files
+powerpoint_destination_directory: "C:/Users/jfhar/Documents/Organized/PowerPoint" # Where PowerPoint files will be moved
+powerpoint_ignored_log: "C:/Users/jfhar/github/desktop_organizer/powerpoint_ignored/powerpoint_ignored.log"
+powerpoint_moved_log: "C:/Users/jfhar/github/desktop_organizer/powerpoint_moved/powerpoint_moved.log"
+powerpoint_retain_copy: false # If true, keep a copy of the file in the original directory after moving
 
 # Model (see model_config.py)
 model:

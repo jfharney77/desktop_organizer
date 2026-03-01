@@ -100,4 +100,65 @@ put the code in the src directory and make it a different fast api endpoint
  can you make a main method in ther model_config.py file
  that calls each of those models with a sample query?
 
- 
+ ---
+
+ can you add scripts in the bash and bat directories that run that tester in the model_config.py file?
+
+ ---
+
+ This is great!   Can you organize this further by creating a directory
+ in src called image_organization that houses all the source files?
+(with the exception of any config based files like model_config.py)
+
+That way I can start creating organization tools for other file types
+
+---
+
+checkout a new branch called devel-powerpoint-org
+
+Great!  Now lets move to another file format - Microsoft PowerPoint!
+
+Can you create a directory in src for powerpoint_organization?
+
+In this, develop a similar workflow for search for and moving powerpoint files from a source 
+directory to a destination directory.   Add similar agentic workflow structure, tooling,
+configuration parameters, fast api endpoint and client for the powerpoint file movement agent.
+
+---
+
+Great!  Also update the scripts (install and run for uv and pip) for this new powerpoint organization.
+It may be helpful to organize the bash and bat directories for image and powerpoint based scripts
+
+---
+
+great
+now id like to create a directory called notebooks.  In this directory there will
+be directories for both the image organization workflow and the powerpoint workflow.
+in each workflow, write a jupyter notebook file that can print out the mermaid style diagram for the
+langgraph worklow.  Also create a script for running jupyter notebook in the script directory
+
+---
+
+great!
+
+So I noticed that the workflow nodes in image_organization (and i imagine, powerpoint organization)
+are not calling the tools through the agent but rather as an explicit function.
+I understand why you did this.  But can you create an additional flag in the config
+file that i can set to run the agent with the implicit tool call from the agent?
+And if that flag is set, adjust the notebook files so that it also can display the tool calls from the agent workflow?
+
+---
+
+ok great!
+
+Do the same logic for the powerpoint_organization section as well (create appropriate jupyter notebook and utilize the flag use_agent to create the corresponding workflow either react or pure stategraph)
+
+
+---
+
+ok when running the agent version of image organization i am getting the error:
+Two errors occurred:
+1. The directory 'C:/Users/jfhar/pickedpics' contains no image files.
+2. The directory 'C:/Users/jfhar/pickedpics' does not contain any PNG or JPG image files.
+
+But there are images in that directory.  Do you know how to fix this?

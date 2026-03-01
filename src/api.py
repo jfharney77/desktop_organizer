@@ -15,11 +15,12 @@ from pydantic import BaseModel
 from image_organization.vision_workflow import run_vision_workflow
 from image_organization.workflow import run_workflow
 from model_config import VISION_MODEL
+from powerpoint_organization.workflow import run_workflow as run_pptx_workflow
 
 app = FastAPI(
-    title="Desktop Image Organizer",
-    description="Recursively scan a directory for PNG/JPEG images and move them to a destination.",
-    version="0.1.0",
+    title="Desktop File Organizer",
+    description="Organize images and PowerPoint files by scanning directories and moving them to a destination.",
+    version="0.2.0",
 )
 
 # Resolve config path relative to this file so it works regardless of working directory.
@@ -55,6 +56,7 @@ class OrganizeRequest(BaseModel):
     ignored_log: Optional[str] = None
     moved_log: Optional[str] = None
     retain_copy: Optional[bool] = None
+    use_agent: Optional[bool] = None
 
 
 class OrganizeResponse(BaseModel):
@@ -106,6 +108,78 @@ def describe(request: DescribeRequest):
     )
 
 
+class PowerpointOrganizeRequest(BaseModel):
+    """All fields are optional; missing values fall back to config.yaml."""
+    source_directory: Optional[str] = None
+    destination_directory: Optional[str] = None
+    ignored_log: Optional[str] = None
+    moved_log: Optional[str] = None
+    retain_copy: Optional[bool] = None
+    use_agent: Optional[bool] = None
+
+
+class PowerpointOrganizeResponse(BaseModel):
+    source_directory: str
+    destination_directory: str
+    ignored_log: str
+    moved_log: str
+    retain_copy: bool
+    agent_summary: str
+
+
+@app.post("/organize/powerpoint", response_model=PowerpointOrganizeResponse)
+def organize_powerpoint(request: PowerpointOrganizeRequest = PowerpointOrganizeRequest()):
+    """
+    Trigger the PowerPoint organizer workflow.
+
+    Scans the source directory for .pptx, .ppt, and .pptm files and moves
+    them to the destination directory.  Request body fields override the
+    corresponding config.yaml values; omitted fields use config.yaml defaults.
+    """
+    config = _load_config()
+    model_cfg = config.get("model", {})
+
+    source_dir  = request.source_directory      or config.get("powerpoint_source_directory", "")
+    dest_dir    = request.destination_directory  or config.get("powerpoint_destination_directory", "")
+    ignored_log = request.ignored_log            or config.get("powerpoint_ignored_log", "powerpoint_ignored.log")
+    moved_log   = request.moved_log              or config.get("powerpoint_moved_log", "powerpoint_moved.log")
+    retain_copy = request.retain_copy if request.retain_copy is not None else bool(config.get("powerpoint_retain_copy", False))
+    use_agent   = request.use_agent   if request.use_agent   is not None else bool(config.get("use_agent", False))
+    model_name  = model_cfg.get("name", "llama3.2")
+    temperature = float(model_cfg.get("temperature", 0.0))
+
+    if not source_dir:
+        raise HTTPException(
+            status_code=400,
+            detail="source_directory is required (set powerpoint_source_directory in config.yaml or the request body).",
+        )
+    if not dest_dir:
+        raise HTTPException(
+            status_code=400,
+            detail="destination_directory is required (set powerpoint_destination_directory in config.yaml or the request body).",
+        )
+
+    summary = run_pptx_workflow(
+        source_dir=source_dir,
+        destination_dir=dest_dir,
+        ignored_log=ignored_log,
+        moved_log=moved_log,
+        retain_copy=retain_copy,
+        use_agent=use_agent,
+        model_name=model_name,
+        temperature=temperature,
+    )
+
+    return PowerpointOrganizeResponse(
+        source_directory=source_dir,
+        destination_directory=dest_dir,
+        ignored_log=ignored_log,
+        moved_log=moved_log,
+        retain_copy=retain_copy,
+        agent_summary=summary,
+    )
+
+
 @app.get("/health")
 def health():
     """Simple liveness check."""
@@ -128,6 +202,7 @@ def organize(request: OrganizeRequest = OrganizeRequest()):
     ignored_log = request.ignored_log            or config.get("ignored_log", "ignored_images.log")
     moved_log   = request.moved_log              or config.get("moved_log", "moved_images.log")
     retain_copy = request.retain_copy if request.retain_copy is not None else bool(config.get("retain_copy", False))
+    use_agent   = request.use_agent   if request.use_agent   is not None else bool(config.get("use_agent", False))
     model_name  = model_cfg.get("name", "llama3.2")
     temperature = float(model_cfg.get("temperature", 0.0))
 
@@ -148,6 +223,7 @@ def organize(request: OrganizeRequest = OrganizeRequest()):
         ignored_log=ignored_log,
         moved_log=moved_log,
         retain_copy=retain_copy,
+        use_agent=use_agent,
         model_name=model_name,
         temperature=temperature,
     )

@@ -1,7 +1,7 @@
 """
 main.py
 
-Entry point for the desktop image organizer.
+Entry point for the PowerPoint organizer.
 Reads config/config.yaml and kicks off the LangGraph workflow.
 """
 
@@ -13,10 +13,10 @@ import yaml
 # Ensure src/ is on sys.path so package imports work when run as a script.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from image_organization.workflow import run_workflow
+from powerpoint_organization.workflow import run_workflow
 
 # Resolve config path relative to this file so it works regardless of working directory.
-# src/image_organization/main.py -> parent -> image_organization/ -> parent -> src/ -> parent -> project root
+# src/powerpoint_organization/main.py -> parent -> powerpoint_organization/ -> parent -> src/ -> parent -> project root
 _CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "config.yaml"
 
 
@@ -31,19 +31,19 @@ def load_config() -> dict:
 def main() -> None:
     config = load_config()
 
-    source_dir = config.get("source_directory", "").strip()
-    dest_dir = config.get("destination_directory", "").strip()
-    ignored_log = config.get("ignored_log", "ignored_images.log").strip()
-    moved_log = config.get("moved_log", "moved_images.log").strip()
-    retain_copy = bool(config.get("retain_copy", False))
-    use_agent = bool(config.get("use_agent", False))
+    source_dir  = config.get("powerpoint_source_directory", "").strip()
+    dest_dir    = config.get("powerpoint_destination_directory", "").strip()
+    ignored_log = config.get("powerpoint_ignored_log", "powerpoint_ignored.log").strip()
+    moved_log   = config.get("powerpoint_moved_log", "powerpoint_moved.log").strip()
+    retain_copy = bool(config.get("powerpoint_retain_copy", False))
+    use_agent   = bool(config.get("use_agent", False))
 
-    model_cfg = config.get("model", {})
-    model_name = model_cfg.get("name", "llama3.2")
+    model_cfg   = config.get("model", {})
+    model_name  = model_cfg.get("name", "llama3.2")
     temperature = float(model_cfg.get("temperature", 0.0))
 
     if not source_dir or not dest_dir:
-        print("Error: 'source_directory' and 'destination_directory' must be set in config.yaml")
+        print("Error: 'powerpoint_source_directory' and 'powerpoint_destination_directory' must be set in config.yaml")
         sys.exit(1)
 
     print(f"Source      : {source_dir}")
