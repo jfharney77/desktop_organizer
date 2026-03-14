@@ -6,15 +6,17 @@ Start with:  uvicorn api:app --app-dir src --host 0.0.0.0 --port 8000 --reload
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from image_organization.vision_workflow import run_vision_workflow
+from image_vision.vision_workflow import run_vision_workflow
 from image_organization.workflow import run_workflow
+from powerpoint_organization.workflow import run_workflow as run_pptx_workflow
+from txt_organization.workflow import run_workflow as run_txt_workflow
 from model_config import VISION_MODEL
 
 app = FastAPI(
@@ -63,6 +65,7 @@ class OrganizeRequest(BaseModel):
     ignored_log: Optional[str] = None
     moved_log: Optional[str] = None
     retain_copy: Optional[bool] = None
+    extensions: Optional[List[str]] = None
 
 
 class OrganizeResponse(BaseModel):
@@ -87,8 +90,9 @@ def describe(request: DescribeRequest):
     """
     config = _load_config()
 
-    image_name  = request.image_name      or config.get("describe_image_name", "").strip()
-    search_dir  = request.search_directory or config.get("destination_directory", "")
+    img_cfg     = config.get("images", {})
+    image_name  = request.image_name      or img_cfg.get("describe_image_name", "").strip()
+    search_dir  = request.search_directory or img_cfg.get("destination_directory", "")
 
     if not image_name:
         raise HTTPException(
@@ -128,14 +132,16 @@ def organize(request: OrganizeRequest = OrganizeRequest()):
     Request body fields all override the corresponding config.yaml values.
     If a field is omitted the config.yaml value is used.
     """
-    config = _load_config()
+    config    = _load_config()
+    img_cfg   = config.get("images", {})
     model_cfg = config.get("model", {})
 
-    source_dir  = request.source_directory      or config.get("source_directory", "")
-    dest_dir    = request.destination_directory  or config.get("destination_directory", "")
-    ignored_log = request.ignored_log            or config.get("ignored_log", "ignored_images.log")
-    moved_log   = request.moved_log              or config.get("moved_log", "moved_images.log")
-    retain_copy = request.retain_copy if request.retain_copy is not None else bool(config.get("retain_copy", False))
+    source_dir  = request.source_directory      or img_cfg.get("source_directory", "")
+    dest_dir    = request.destination_directory  or img_cfg.get("destination_directory", "")
+    ignored_log = request.ignored_log            or img_cfg.get("ignored_log", "ignored_images.log")
+    moved_log   = request.moved_log              or img_cfg.get("moved_log", "moved_images.log")
+    retain_copy = request.retain_copy if request.retain_copy is not None else bool(img_cfg.get("retain_copy", False))
+    extensions  = request.extensions if request.extensions is not None else img_cfg.get("extensions", [".png", ".jpg", ".jpeg"])
     model_name  = model_cfg.get("name", "llama3.2")
     temperature = float(model_cfg.get("temperature", 0.0))
 
@@ -156,8 +162,121 @@ def organize(request: OrganizeRequest = OrganizeRequest()):
         ignored_log=ignored_log,
         moved_log=moved_log,
         retain_copy=retain_copy,
+        extensions=extensions,
         model_name=model_name,
         temperature=temperature,
+    )
+
+    return OrganizeResponse(
+        source_directory=source_dir,
+        destination_directory=dest_dir,
+        ignored_log=ignored_log,
+        moved_log=moved_log,
+        retain_copy=retain_copy,
+        agent_summary=summary,
+    )
+
+
+class PptxOrganizeRequest(BaseModel):
+    """All fields are optional; missing values fall back to config.yaml powerpoint section."""
+    source_directory: Optional[str] = None
+    destination_directory: Optional[str] = None
+    ignored_log: Optional[str] = None
+    moved_log: Optional[str] = None
+    retain_copy: Optional[bool] = None
+
+
+@app.post("/organize/pptx", response_model=OrganizeResponse)
+def organize_pptx(request: PptxOrganizeRequest = PptxOrganizeRequest()):
+    """
+    Trigger the PowerPoint organizer workflow.
+
+    Recursively scans source_directory for .pptx and .ppt files and moves
+    them to destination_directory. Request body fields override config.yaml
+    powerpoint section values.
+    """
+    config = _load_config()
+    pptx_cfg = config.get("powerpoint", {})
+
+    source_dir  = request.source_directory      or pptx_cfg.get("source_directory", "")
+    dest_dir    = request.destination_directory  or pptx_cfg.get("destination_directory", "")
+    ignored_log = request.ignored_log            or pptx_cfg.get("ignored_log", "ignored_pptx.log")
+    moved_log   = request.moved_log              or pptx_cfg.get("moved_log", "moved_pptx.log")
+    retain_copy = request.retain_copy if request.retain_copy is not None else bool(pptx_cfg.get("retain_copy", False))
+
+    if not source_dir:
+        raise HTTPException(
+            status_code=400,
+            detail="source_directory is required (set it in config.yaml under 'powerpoint' or pass it in the request body).",
+        )
+    if not dest_dir:
+        raise HTTPException(
+            status_code=400,
+            detail="destination_directory is required (set it in config.yaml under 'powerpoint' or pass it in the request body).",
+        )
+
+    summary = run_pptx_workflow(
+        source_dir=source_dir,
+        destination_dir=dest_dir,
+        ignored_log=ignored_log,
+        moved_log=moved_log,
+        retain_copy=retain_copy,
+    )
+
+    return OrganizeResponse(
+        source_directory=source_dir,
+        destination_directory=dest_dir,
+        ignored_log=ignored_log,
+        moved_log=moved_log,
+        retain_copy=retain_copy,
+        agent_summary=summary,
+    )
+
+
+class TxtOrganizeRequest(BaseModel):
+    """All fields are optional; missing values fall back to config.yaml txt section."""
+    source_directory: Optional[str] = None
+    destination_directory: Optional[str] = None
+    ignored_log: Optional[str] = None
+    moved_log: Optional[str] = None
+    retain_copy: Optional[bool] = None
+
+
+@app.post("/organize/txt", response_model=OrganizeResponse)
+def organize_txt(request: TxtOrganizeRequest = TxtOrganizeRequest()):
+    """
+    Trigger the text file organizer workflow.
+
+    Recursively scans source_directory for .txt files and moves them to
+    destination_directory. Request body fields override config.yaml txt
+    section values.
+    """
+    config  = _load_config()
+    txt_cfg = config.get("txt", {})
+
+    source_dir  = request.source_directory      or txt_cfg.get("source_directory", "")
+    dest_dir    = request.destination_directory  or txt_cfg.get("destination_directory", "")
+    ignored_log = request.ignored_log            or txt_cfg.get("ignored_log", "ignored_txt.log")
+    moved_log   = request.moved_log              or txt_cfg.get("moved_log", "moved_txt.log")
+    retain_copy = request.retain_copy if request.retain_copy is not None else bool(txt_cfg.get("retain_copy", False))
+
+    if not source_dir:
+        raise HTTPException(
+            status_code=400,
+            detail="source_directory is required (set it in config.yaml under 'txt' or pass it in the request body).",
+        )
+    if not dest_dir:
+        raise HTTPException(
+            status_code=400,
+            detail="destination_directory is required (set it in config.yaml under 'txt' or pass it in the request body).",
+        )
+
+    summary = run_txt_workflow(
+        source_dir=source_dir,
+        destination_dir=dest_dir,
+        ignored_log=ignored_log,
+        moved_log=moved_log,
+        retain_copy=retain_copy,
     )
 
     return OrganizeResponse(

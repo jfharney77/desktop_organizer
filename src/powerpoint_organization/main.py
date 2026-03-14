@@ -1,7 +1,7 @@
 """
 main.py
 
-Entry point for the desktop image organizer.
+Standalone entry point for the PowerPoint organizer.
 Reads config/config.yaml and kicks off the LangGraph workflow.
 """
 
@@ -13,10 +13,8 @@ import yaml
 # Ensure src/ is on sys.path so package imports work when run as a script.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from image_organization.workflow import run_workflow
+from powerpoint_organization.workflow import run_workflow
 
-# Resolve config path relative to this file so it works regardless of working directory.
-# src/image_organization/main.py -> parent -> image_organization/ -> parent -> src/ -> parent -> project root
 _CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "config.yaml"
 
 
@@ -31,20 +29,16 @@ def load_config() -> dict:
 def main() -> None:
     config = load_config()
 
-    img_cfg = config.get("images", {})
-    source_dir  = img_cfg.get("source_directory", "").strip()
-    dest_dir    = img_cfg.get("destination_directory", "").strip()
-    ignored_log = img_cfg.get("ignored_log", "ignored_images.log").strip()
-    moved_log   = img_cfg.get("moved_log", "moved_images.log").strip()
-    retain_copy = bool(img_cfg.get("retain_copy", False))
-    extensions  = img_cfg.get("extensions", [".png", ".jpg", ".jpeg"])
+    pptx_cfg = config.get("powerpoint", {})
 
-    model_cfg  = config.get("model", {})
-    model_name = model_cfg.get("name", "llama3.2")
-    temperature = float(model_cfg.get("temperature", 0.0))
+    source_dir  = pptx_cfg.get("source_directory", "").strip()
+    dest_dir    = pptx_cfg.get("destination_directory", "").strip()
+    ignored_log = pptx_cfg.get("ignored_log", "ignored_pptx.log").strip()
+    moved_log   = pptx_cfg.get("moved_log", "moved_pptx.log").strip()
+    retain_copy = bool(pptx_cfg.get("retain_copy", False))
 
     if not source_dir or not dest_dir:
-        print("Error: 'images.source_directory' and 'images.destination_directory' must be set in config.yaml")
+        print("Error: 'powerpoint.source_directory' and 'powerpoint.destination_directory' must be set in config.yaml")
         sys.exit(1)
 
     print(f"Source      : {source_dir}")
@@ -52,8 +46,6 @@ def main() -> None:
     print(f"Ignored log : {ignored_log}")
     print(f"Moved log   : {moved_log}")
     print(f"Retain copy : {retain_copy}")
-    print(f"Extensions  : {', '.join(extensions)}")
-    print(f"Model       : {model_name}  (temperature={temperature})")
     print("-" * 60)
 
     response = run_workflow(
@@ -62,9 +54,6 @@ def main() -> None:
         ignored_log=ignored_log,
         moved_log=moved_log,
         retain_copy=retain_copy,
-        extensions=extensions,
-        model_name=model_name,
-        temperature=temperature,
     )
 
     print("\n=== Agent summary ===")

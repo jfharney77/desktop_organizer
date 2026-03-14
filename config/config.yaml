@@ -1,14 +1,28 @@
-# Directories
-source_directory: "C:/Users/jfhar/pickedpics" # Root directory to scan recursively
-destination_directory: "C:/Users/jfhar/Pictures/Organized" # Where images will be moved
+# Image organization
+images:
+  source_directory: /mnt/c/Users/jfhar/pickedpics          # Root directory to scan recursively
+  destination_directory: /mnt/c/Users/jfhar/Pictures/Organized  # Where images will be moved
+  ignored_log: /home/john/github/desktop_organizer/ignored_images/ignored_images.log
+  moved_log: /home/john/github/desktop_organizer/moved_images/moved_images.log
+  retain_copy: true                                         # If true, keep a copy in the original directory after moving
+  extensions: [".png", ".jpg", ".jpeg"]                    # File extensions to scan for
+  describe_image_name: "reception-25_1_1.jpg"              # Default image for the /describe endpoint
 
-# Logging
-ignored_log: "C:/Users/jfhar/github/desktop_organizer/ignored_images/ignored_images.log" # File to record images skipped (inside git repos)
-moved_log: "C:/Users/jfhar/github/desktop_organizer/moved_images/moved_images.log" # File to record all moved images (markdown table)
+# PowerPoint organization
+powerpoint:
+  source_directory: ""        # Root directory to scan recursively for .pptx/.ppt files
+  destination_directory: ""   # Where PowerPoint files will be moved
+  ignored_log: /home/john/github/desktop_organizer/ignored_pptx/ignored_pptx.log
+  moved_log: /home/john/github/desktop_organizer/moved_pptx/moved_pptx.log
+  retain_copy: false          # If true, keep a copy in the original directory after moving
 
-# Options
-retain_copy: true # If true, keep a copy of the image in the original directory after moving
-describe_image_name: "reception-25_1_1.jpg" # Default image filename for the /describe endpoint (e.g. "photo.jpg")
+# Text file organization
+txt:
+  source_directory: ""        # Root directory to scan recursively for .txt files
+  destination_directory: ""   # Where text files will be moved
+  ignored_log: /home/john/github/desktop_organizer/ignored_txt/ignored_txt.log
+  moved_log: /home/john/github/desktop_organizer/moved_txt/moved_txt.log
+  retain_copy: false          # If true, keep a copy in the original directory after moving
 
 # Model (see model_config.py)
 model:

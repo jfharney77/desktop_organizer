@@ -23,7 +23,7 @@ from typing import List, TypedDict
 
 from langgraph.graph import END, StateGraph
 
-from image_organization.tools import _move_images_impl, _scan_images_impl
+from image_organization.tools import IMAGE_EXTENSIONS, _move_images_impl, _scan_images_impl
 
 
 # ---------------------------------------------------------------------------
@@ -36,6 +36,7 @@ class OrganizerState(TypedDict):
     ignored_log: str
     moved_log: str
     retain_copy: bool
+    extensions: List[str]
     found_images: List[str]
     ignored_images: List[str]
     summary: str
@@ -46,8 +47,8 @@ class OrganizerState(TypedDict):
 # ---------------------------------------------------------------------------
 
 def scan_node(state: OrganizerState) -> dict:
-    """Discover PNG/JPEG files; write ignored list to log file."""
-    result = _scan_images_impl(state["source_dir"], state["ignored_log"])
+    """Discover image files matching configured extensions; write ignored list to log file."""
+    result = _scan_images_impl(state["source_dir"], state["ignored_log"], set(state.get("extensions", IMAGE_EXTENSIONS)))
     return {
         "found_images": result.get("found", []),
         "ignored_images": result.get("ignored", []),
@@ -92,6 +93,7 @@ def run_workflow(
     ignored_log: str,
     moved_log: str = "",
     retain_copy: bool = False,
+    extensions: List[str] = list(IMAGE_EXTENSIONS),
     model_name: str = "llama3.2",   # reserved for future LLM nodes
     temperature: float = 0.0,        # reserved for future LLM nodes
 ) -> str:
@@ -104,6 +106,7 @@ def run_workflow(
         "ignored_log": ignored_log,
         "moved_log": moved_log,
         "retain_copy": retain_copy,
+        "extensions": extensions,
         "found_images": [],
         "ignored_images": [],
         "summary": "",
