@@ -10,6 +10,7 @@ from typing import Optional
 
 import yaml
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from image_organization.vision_workflow import run_vision_workflow
@@ -20,6 +21,13 @@ app = FastAPI(
     title="Desktop Image Organizer",
     description="Recursively scan a directory for PNG/JPEG images and move them to a destination.",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Resolve config path relative to this file so it works regardless of working directory.

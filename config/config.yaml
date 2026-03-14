@@ -12,5 +12,5 @@ describe_image_name: "reception-25_1_1.jpg" # Default image filename for the /de
 
 # Model (see model_config.py)
 model:
-  name: "llama3.2"
+  name: "qwen2.5:latest"
   temperature: 0.0
