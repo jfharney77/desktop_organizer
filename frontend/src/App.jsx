@@ -12,6 +12,7 @@ const TABS = [
     checkEndpoint:   "/check/images",
     fileLabel:       "image",
     subtitle:        "Move or copy PNG/JPEG images from a source directory to a destination.",
+    hint:            "WSL tip: C:\\Users\\jfhar  =  /mnt/c/Users/jfhar",
     ignoredLogLabel: "Ignored Images Log",
     movedLogLabel:   "Moved Images Log",
     fileCheck:       true,
@@ -415,6 +416,7 @@ function OrganizerPanel({ tab }) {
   return (
     <div onKeyDown={handleKeyDown}>
       <p className={styles.subtitle}>{tab.subtitle}</p>
+      {tab.hint && <p className={styles.hint}>{tab.hint}</p>}
 
       <Field label="Source Directory"      id={`${tab.key}-source`} value={source} onChange={setSource} placeholder="/path/to/source" badge={sourceBadge} />
 

@@ -64,7 +64,14 @@
 .subtitle {
   font-size: 0.85rem;
   color: #6b7280;
-  margin-bottom: 28px;
+  margin-bottom: 8px;
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: #4b5563;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  margin-bottom: 20px;
 }
 
 .field {
