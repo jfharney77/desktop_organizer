@@ -104,9 +104,10 @@ function GitRepoBadge({ path, onReposFound }) {
   const debouncedPath = useDebounce(path, 500);
 
   useEffect(() => {
-    if (!debouncedPath.trim()) { setStatus(null); onReposFound([]); return; }
+    const p = debouncedPath.trim();
+    if (!p) { setStatus(null); onReposFound([]); return; }
     setStatus("checking");
-    fetch(`${API_BASE}/check/git-repo?path=${encodeURIComponent(debouncedPath)}`)
+    fetch(`${API_BASE}/check/git-repo?path=${encodeURIComponent(p)}`)
       .then((r) => r.json())
       .then((data) => { setStatus(data); onReposFound(data.repos ?? []); })
       .catch(() => { setStatus(null); onReposFound([]); });
@@ -128,9 +129,10 @@ function FileBadge({ path, checkEndpoint, fileLabel, onFilesFound }) {
   const debouncedPath = useDebounce(path, 500);
 
   useEffect(() => {
-    if (!debouncedPath.trim()) { setStatus(null); onFilesFound([]); return; }
+    const p = debouncedPath.trim();
+    if (!p) { setStatus(null); onFilesFound([]); return; }
     setStatus("checking");
-    fetch(`${API_BASE}${checkEndpoint}?path=${encodeURIComponent(debouncedPath)}`)
+    fetch(`${API_BASE}${checkEndpoint}?path=${encodeURIComponent(p)}`)
       .then((r) => r.json())
       .then((data) => { setStatus(data); onFilesFound(data.files ?? []); })
       .catch(() => { setStatus(null); onFilesFound([]); });
